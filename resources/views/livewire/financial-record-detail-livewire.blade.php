@@ -1,41 +1,58 @@
-<div>
-    @if ($record)
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Detail Transaksi</h6>
-            </div>
-            <div class="card-body">
-                <h3 class="text-{{ $record->type === 'pemasukan' ? 'success' : 'danger' }}">
-                    {{ ucfirst($record->type) }}
-                </h3>
-                
-                <h1 class="mb-4">Rp. {{ number_format($record->amount, 2, ',', '.') }}</h1>
-                
-                <p><strong>Tanggal Transaksi:</strong> {{ $record->date->format('d F Y') }}</p>
-                <p><strong>Dibuat Oleh:</strong> {{ $record->user->name }}</p>
-                
-                <hr>
-                
-                <h4>Deskripsi/Keterangan:</h4>
-                <p>{{ $record->description }}</p>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Detail Catatan Keuangan</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ route('app.home') }}" class="btn btn-sm btn-outline-secondary mb-3">
+                        <i class="bi bi-arrow-left"></i> Kembali ke Home
+                    </a>
 
-                @if ($record->cover)
-                    <h4 class="mt-4">Bukti Gambar:</h4>
-                    <div class="mt-2">
-                        <img src="{{ $record->cover_url }}" alt="Bukti Transaksi" class="img-fluid" style="max-height: 400px; border-radius: 8px; border: 1px solid #ccc;">
-                    </div>
-                @endif
+                    @if ($record)
+                        <dl class="row">
+                            <dt class="col-sm-3">Tanggal</dt>
+                            <dd class="col-sm-9">{{ $record->date->format('d F Y') }}</dd>
 
-            </div>
-            <div class="card-footer">
-                <a href="{{ route('home') }}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Kembali ke Daftar
-                </a>
+                            <dt class="col-sm-3">Tipe</dt>
+                            <dd class="col-sm-9">
+                                @if ($record->type == 'pemasukan')
+                                    <span class="badge bg-success">Pemasukan</span>
+                                @else
+                                    <span class="badge bg-danger">Pengeluaran</span>
+                                @endif
+                            </dd>
+
+                            <dt class="col-sm-3">Jumlah</dt>
+                            <dd class="col-sm-9">Rp {{ number_format($record->amount, 0, ',', '.') }}</dd>
+
+                            <dt class="col-sm-3">Deskripsi</dt>
+                            <dd class="col-sm-9">{{ $record->description }}</dd>
+
+                            <dt class="col-sm-3">Bukti (Cover)</dt>
+                            <dd class="col-sm-9">
+                                @if ($record->cover)
+                                    <div class="mb-2">
+                                        <img src="{{ $record->cover_url }}" alt="Cover" class="img-fluid rounded" style="max-height: 300px;">
+                                    </div>
+                                    {{-- Tombol Hapus Cover --}}
+                                    <button 
+                                        wire:click="deleteCover" 
+                                        wire:confirm="Anda yakin ingin menghapus cover ini?"
+                                        class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i> Hapus Cover
+                                    </button>
+                                @else
+                                    <span class="text-muted">Tidak ada bukti gambar.</span>
+                                @endif
+                            </dd>
+                        </dl>
+                    @else
+                        <p class="text-danger">Gagal memuat data catatan.</p>
+                    @endif
+                </div>
             </div>
         </div>
-    @else
-        <div class="alert alert-warning">
-            Catatan keuangan tidak ditemukan atau Anda tidak memiliki akses.
-        </div>
-    @endif
+    </div>
 </div>
