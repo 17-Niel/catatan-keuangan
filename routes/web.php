@@ -11,7 +11,6 @@ Route::get('/', function () {
     return redirect()->route('app.home');
 });
 
-// --- Kelompok Rute AUTENTIKASI (Akses GUEST) ---
 // Rute ini hanya dapat diakses oleh pengguna yang BELUM login
 Route::group(['prefix' => 'auth'], function () {
     // Menampilkan halaman login
