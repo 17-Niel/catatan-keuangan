@@ -4,7 +4,8 @@
         <div class="card-body">
             <div>
                 <div class="text-center">
-                    <img src="/logo.png" alt="Logo">
+                    <img src="/assets/uang.png" alt="duit" width="150" height="150">
+
                     <h2>Mendaftar</h2>
                 </div>
                 <hr>
