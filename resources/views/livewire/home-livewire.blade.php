@@ -64,7 +64,8 @@
                     <td>{{ Str::limit($record->description, 50) }}</td>
                     <td>
                         {{-- Link ke Detail --}}
-                        <a href="{{ route('financial.detail', $record->id) }}" class="btn btn-sm btn-info text-white">
+                   
+                        <a href="{{ route('app.financial.detail', ['financialRecord' => $record->id]) }}" class="btn btn-sm btn-info text-white">
                             <i class="bi bi-eye"></i>
                         </a>
                         {{-- Tombol Edit --}}

@@ -1,5 +1,4 @@
 <form wire:submit.prevent="updateCover">
-    {{-- Pastikan ID modal ini sama dengan yang dipanggil oleh dispatch('openModal', ['id' => 'editCoverModal']) --}}
     <div class="modal fade" tabindex="-1" id="editCoverModal" wire:ignore.self>
         <div class="modal-dialog">
             <div class="modal-content">
@@ -9,13 +8,16 @@
                 </div>
                 
                 <div class="modal-body">
-                    
                     {{-- Ganti $editCoverTodoFile menjadi $editCover --}}
                     @if ($editCover)
                         <div class="mb-3">
                             <label class="form-label">Cover Saat Ini:</label>
-                            {{-- Menggunakan accessor cover_url dari Model FinancialRecord --}}
+                            {{-- Memastikan path gambar menggunakan Storage::url() --}}
                             <img src="{{ Storage::url($editCover) }}" alt="Cover Bukti Saat Ini" style="max-width: 150px; height: auto;" class="img-thumbnail">
+                        </div>
+                    @else
+                        <div class="alert alert-info">
+                            Belum ada bukti gambar yang diunggah untuk catatan ini.
                         </div>
                     @endif
                     
@@ -38,9 +40,8 @@
                 </div>
                 
                 <div class="modal-footer">
-                    {{-- Pastikan wire:click memanggil method resetInput() --}}
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" wire:click="resetInput">Batal</button>
-                    {{-- Hilangkan pengecekan variabel lama yang error --}}
+                    {{-- Pengecekan variabel error dihilangkan dari sini --}}
                     <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">Simpan Cover Baru</button>
                 </div>
             </div>
