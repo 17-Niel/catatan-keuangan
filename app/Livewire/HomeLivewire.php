@@ -5,7 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Rule;
-use App\Models\FinancialRecord; // Menggunakan Model baru
+use App\Models\FinancialRecord;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\WithPagination;
@@ -22,9 +22,9 @@ class HomeLivewire extends Component
     public $amount;
     #[Rule('required|date')]
     public $date;
-    #[Rule('required|string|max:255')]
+    #[Rule('required')]
     public $description;
-    #[Rule('nullable|image|max:1024')]
+    #[Rule('nullable|image|max:2048')] // Increased to 2MB
     public $cover;
 
     // Properti lainnya
@@ -36,6 +36,7 @@ class HomeLivewire extends Component
     private function resetInput()
     {
         $this->reset(['id', 'type', 'amount', 'date', 'description', 'cover', 'editCover', 'isEditMode']);
+        $this->resetErrorBag();
     }
 
     public function updated($propertyName)
@@ -43,20 +44,22 @@ class HomeLivewire extends Component
         $this->validateOnly($propertyName);
     }
     
-    // Dipanggil saat properti $search berubah
     public function updatingSearch()
     {
-        $this->resetPage(); // Reset pagination saat mencari
+        $this->resetPage();
     }
 
-    // --- CRUD OPERASI ---
+    // --- CRUD OPERATIONS ---
 
     public function create()
     {
         $this->validate();
         
-        // --- PERBAIKAN: Menggunakan disk 'public' ---
-        $fileName = $this->cover ? $this->cover->store('financial_covers', 'public') : null;
+        // Handle cover upload
+        $fileName = null;
+        if ($this->cover) {
+            $fileName = $this->cover->store('financial_covers', 'public');
+        }
 
         FinancialRecord::create([
             'user_id' => Auth::user()->id,
@@ -69,7 +72,6 @@ class HomeLivewire extends Component
 
         $this->resetInput();
         
-        // Pemicu SweetAlert2
         $this->dispatch('closeModal', ['id' => 'addModal']);
         $this->dispatch('show-alert', ['type' => 'success', 'message' => 'Catatan Keuangan berhasil ditambahkan!']);
     }
@@ -81,7 +83,7 @@ class HomeLivewire extends Component
         $this->id = $record->id;
         $this->type = $record->type;
         $this->amount = $record->amount;
-        $this->date = $record->date->format('Y-m-d'); // Format tanggal untuk input HTML
+        $this->date = $record->date->format('Y-m-d');
         $this->description = $record->description;
         $this->editCover = $record->cover;
         $this->isEditMode = true;
@@ -108,7 +110,7 @@ class HomeLivewire extends Component
         $this->dispatch('show-alert', ['type' => 'success', 'message' => 'Catatan Keuangan berhasil diperbarui!']);
     }
     
-    // --- MENGOLAH GAMBAR (Cover) ---
+    // --- COVER MANAGEMENT ---
     public function showEditCoverModal($id)
     {
         $record = FinancialRecord::where('user_id', Auth::id())->findOrFail($id);
@@ -119,16 +121,16 @@ class HomeLivewire extends Component
 
     public function updateCover()
     {
-        $this->validate(['cover' => 'required|image|max:1024']); 
+        $this->validate(['cover' => 'required|image|max:2048']);
 
         $record = FinancialRecord::where('user_id', Auth::id())->findOrFail($this->id);
 
-        // --- PERBAIKAN: Menggunakan disk 'public' ---
+        // Delete old cover if exists
         if ($record->cover && Storage::disk('public')->exists($record->cover)) {
             Storage::disk('public')->delete($record->cover);
         }
 
-        // Simpan file baru
+        // Save new cover
         $fileName = $this->cover->store('financial_covers', 'public');
         $record->update(['cover' => $fileName]);
 
@@ -138,8 +140,7 @@ class HomeLivewire extends Component
         $this->dispatch('show-alert', ['type' => 'success', 'message' => 'Cover berhasil diubah!']);
     }
     
-    // --- HAPUS DATA (Perbaikan) ---
-
+    // --- DELETE OPERATIONS ---
     public function deleteConfirm($id)
     {
         $this->id = $id;
@@ -150,7 +151,7 @@ class HomeLivewire extends Component
     {
         $record = FinancialRecord::where('user_id', Auth::id())->findOrFail($this->id);
         
-        // --- PERBAIKAN: Menggunakan disk 'public' ---
+        // Delete cover file if exists
         if ($record->cover && Storage::disk('public')->exists($record->cover)) {
             Storage::disk('public')->delete($record->cover);
         }
@@ -163,13 +164,12 @@ class HomeLivewire extends Component
         $this->dispatch('show-alert', ['type' => 'success', 'message' => 'Catatan Keuangan berhasil dihapus!']);
     }
     
-    // --- LOGIKA UTAMA (RENDER) ---
-
+    // --- MAIN RENDER LOGIC ---
     public function render()
     {
         $query = FinancialRecord::where('user_id', Auth::user()->id);
 
-        // Filter dan Pencarian (Sudah diperbaiki)
+        // Search functionality
         if ($this->search) {
             $query->where(function ($q) {
                 $searchTerm = '%' . $this->search . '%';
@@ -178,8 +178,9 @@ class HomeLivewire extends Component
             });
         }
         
-        $records = $query->orderBy('date', 'desc')->paginate(20);
+        $records = $query->orderBy('date', 'desc')->paginate(10);
         
+        // Calculate statistics
         $totalPemasukan = FinancialRecord::where('user_id', Auth::user()->id)
             ->where('type', 'pemasukan')
             ->sum('amount');
@@ -188,11 +189,13 @@ class HomeLivewire extends Component
             ->where('type', 'pengeluaran')
             ->sum('amount');
 
+        $saldoAkhir = $totalPemasukan - $totalPengeluaran;
+
         return view('livewire.home-livewire', [
             'records' => $records,
             'totalPemasukan' => $totalPemasukan,
             'totalPengeluaran' => $totalPengeluaran,
-            'saldoAkhir' => $totalPemasukan - $totalPengeluaran,
+            'saldoAkhir' => $saldoAkhir,
         ]);
     }
 }

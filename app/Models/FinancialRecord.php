@@ -10,32 +10,60 @@ class FinancialRecord extends Model
 {
     use HasFactory;
 
-    // Menentukan nama tabel baru untuk data keuangan
     protected $table = 'financial_records'; 
 
     protected $fillable = [
         'user_id',
-        'type',        // 'pemasukan' atau 'pengeluaran'
-        'amount',      // Jumlah uang
-        'date',        // Tanggal transaksi
-        'description', // Deskripsi catatan
-        'cover',       // Gambar bukti (opsional)
+        'type',
+        'amount', 
+        'date',
+        'description',
+        'cover',
     ];
 
-    // Kolom yang harus di-cast ke tipe data tertentu
     protected $casts = [
         'date' => 'date',
+        'amount' => 'decimal:2',
     ];
 
-    // Relasi: Setiap catatan dimiliki oleh satu User
+    protected $appends = ['cover_url', 'formatted_amount'];
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Accessor: Mendapatkan URL cover
+    // Accessor: URL cover yang benar
     public function getCoverUrlAttribute()
     {
-        return $this->cover ? Storage::url($this->cover) : null;
+        if (!$this->cover) {
+            return null;
+        }
+        
+        return Storage::disk('public')->url($this->cover);
+    }
+
+    // Accessor: Amount yang diformat
+    public function getFormattedAmountAttribute()
+    {
+        return 'Rp ' . number_format($this->amount, 0, ',', '.');
+    }
+
+    // Scope untuk pemasukan
+    public function scopePemasukan($query)
+    {
+        return $query->where('type', 'pemasukan');
+    }
+
+    // Scope untuk pengeluaran
+    public function scopePengeluaran($query)
+    {
+        return $query->where('type', 'pengeluaran');
+    }
+
+    // Scope untuk user tertentu
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 }

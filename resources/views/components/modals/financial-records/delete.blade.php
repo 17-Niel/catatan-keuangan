@@ -25,7 +25,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                
+                   
                 {{-- 
                   Tombol ini akan memanggil fungsi 'delete' 
                   di FinancialRecordDetailLivewire.php 
